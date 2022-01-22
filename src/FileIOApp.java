@@ -15,48 +15,39 @@ public class FileIOApp {
         Path sortedDirectory = Paths.get("D:\\sorted");
 
         List<File> unsortedFilesDirs;
-        List<File> hiddenFiles;
         Set<String> extensions;
 
 
-        hiddenFiles = getHiddenFiles(unsortedDirectory);
-        hiddenFiles.forEach(System.out :: println);
 
 
-//        unsortedFilesDirs = getFiles(unsortedDirectory);
-//
-//        //        unsortedFilesDirs.forEach(System.out::println);
-//        extensions = extensionsFinder(unsortedFilesDirs);
-//        extensions.forEach(System.out :: println);
-//        directoryMaker(sortedDirectory, extensions);
-//
-//
-//        try {
-//            fileMover(unsortedFilesDirs, sortedDirectory.toFile());
-//
-//        } catch(IOException e) {
-//            e.printStackTrace();
-//        }
+
+        unsortedFilesDirs = getFiles(unsortedDirectory);
+
+        unsortedFilesDirs.forEach(System.out :: println);
+        extensions = extensionsFinder(unsortedFilesDirs);
+        extensions.forEach(System.out :: println);
 
 
-    }
+        directoryMaker(sortedDirectory, extensions);
 
 
-    public static List<File> getHiddenFiles(Path path) {
+        try {
+            fileMover(unsortedFilesDirs, sortedDirectory.toFile());
 
-        List<File> results = new ArrayList<>();
-        try(Stream<Path> subPaths = Files.walk(path, Integer.MAX_VALUE);) {
-            results = subPaths.filter(e -> e.toFile().isHidden()).map(Path :: toFile).collect(Collectors.toList());
         } catch(IOException e) {
             e.printStackTrace();
         }
-        return results;
+
+
     }
+
+
+
 
 
     public static List<File> getFiles(Path unsorted) {
         List<File> results = new ArrayList<>();
-        try(Stream<Path> subPaths = Files.walk(unsorted, Integer.MAX_VALUE);) {
+        try(Stream<Path> subPaths = Files.walk(unsorted, Integer.MAX_VALUE)) {
             results = subPaths.filter(e -> e.toFile().isFile()).map(Path :: toFile).collect(Collectors.toList());
         } catch(IOException e) {
             e.printStackTrace();
@@ -72,6 +63,7 @@ public class FileIOApp {
             if(i >= 0) {
                 extensions.add(list.toString().substring(i + 1));
                 if(list.isHidden()) {
+                    System.out.println(list.getName());
                     extensions.add("hidden");
                 }
             }
@@ -99,6 +91,9 @@ public class FileIOApp {
                 Path source = file.toPath();
                 Path destination = dir.toPath().resolve(extension).resolve(file.getName());
                 if(!destination.toFile().exists()) {
+                    if(source.toFile().isHidden()){
+                        destination = dir.toPath().resolve("hidden").resolve(file.getName());
+                    }
                     Files.move(source, destination);
 
                 }
