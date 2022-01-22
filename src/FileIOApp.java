@@ -17,8 +17,7 @@ public class FileIOApp {
         List<File> unsortedFilesDirs;
         Set<String> extensions;
 
-
-
+        List<File> sortedFilesDirs;
 
 
         unsortedFilesDirs = getFiles(unsortedDirectory);
@@ -39,10 +38,18 @@ public class FileIOApp {
         }
 
 
+        sortedFilesDirs = getFiles(sortedDirectory);
+        sortedFilesDirs.forEach(System.out :: println);
+
+
+        try {
+            summaryMaker(sortedFilesDirs,sortedDirectory);
+        } catch(IOException e) {
+            e.printStackTrace();
+        }
+
+
     }
-
-
-
 
 
     public static List<File> getFiles(Path unsorted) {
@@ -66,6 +73,9 @@ public class FileIOApp {
                     System.out.println(list.getName());
                     extensions.add("hidden");
                 }
+                if(!extensions.contains("summary")) {
+                    extensions.add("summary");
+                }
             }
         }
         return extensions;
@@ -73,6 +83,7 @@ public class FileIOApp {
 
 
     public static void directoryMaker(Path sorted, Set<String> extensions) {
+
         Iterator extension = extensions.iterator();
         while(extension.hasNext()) {
             File dir = new File(String.valueOf(sorted.resolve(extension.next().toString())));
@@ -91,7 +102,7 @@ public class FileIOApp {
                 Path source = file.toPath();
                 Path destination = dir.toPath().resolve(extension).resolve(file.getName());
                 if(!destination.toFile().exists()) {
-                    if(source.toFile().isHidden()){
+                    if(source.toFile().isHidden()) {
                         destination = dir.toPath().resolve("hidden").resolve(file.getName());
                     }
                     Files.move(source, destination);
@@ -114,4 +125,36 @@ public class FileIOApp {
     }
 
 
+    private static void summaryMaker(List<File> filesPath, Path sortedPath) throws IOException {
+
+        List<String> summary = new ArrayList<>();
+        Set<String> ext = new HashSet<>();
+        String sum = "/summary/summary.txt";
+
+
+        for(File file : filesPath) {
+            ext.add(getExtension(file.getName()));
+
+        }
+
+        summary.add(String.format("%-50s%13s%13s%13s", "name", "readable", "writeable", "hidden"));
+
+        for(String s : ext) {
+            summary.add("\n");
+            summary.add(s + ":");
+            summary.add("----------");
+            for(File file : filesPath) {
+                if(s.equals(file.getParentFile().getName())) {
+                    summary.add(String.format("%-50s%13s%13s%13s", file.getName(), file.canRead() ? "Y" : "N", file.canWrite() ? "Y" : "N", file.isHidden() ? "Y" : "N"));
+                }
+            }
+        }
+        //check if the summarty file already exists, if not, it's being created and written
+        if(!Paths.get(sortedPath + sum).toFile().exists()) {
+            Files.createFile(Paths.get(sortedPath + sum));
+        }
+        Files.write(Paths.get(sortedPath + sum), summary);
+
+
+    }
 }
